@@ -7,7 +7,7 @@
 //////////////////////////////////////////////////////////////////////////
 #define UTF8_REPLACEMENT_CHARACTER (0xFFFD)
 //////////////////////////////////////////////////////////////////////////
-size_t utf8_from_wchar_size( const wchar_t * _unicode, size_t _unicodeSize )
+size_t utf8_from_unicode_size( const wchar_t * _unicode, size_t _unicodeSize )
 {
     size_t unicodeSize = (_unicodeSize == UTF8_UNKNOWN) ? wcslen( _unicode ) : _unicodeSize;
     size_t utf8Size = 0;
@@ -41,7 +41,7 @@ size_t utf8_from_wchar_size( const wchar_t * _unicode, size_t _unicodeSize )
     return utf8Size;
 }
 //////////////////////////////////////////////////////////////////////////
-size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * const _utf8, size_t _utf8Capacity )
+size_t utf8_from_unicode( const wchar_t * _unicode, size_t _unicodeSize, char * const _utf8, size_t _utf8Capacity )
 {
     if( _utf8Capacity == 0 )
     {
@@ -122,7 +122,7 @@ size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * co
     return utf8Size;
 }
 //////////////////////////////////////////////////////////////////////////
-size_t utf8_to_wchar_size( const char * _utf8, size_t _utf8Size )
+size_t utf8_to_unicode_size( const char * _utf8, size_t _utf8Size )
 {
     size_t utf8Size = (_utf8Size == UTF8_UNKNOWN) ? strlen( _utf8 ) : _utf8Size;
 
@@ -174,7 +174,7 @@ size_t utf8_to_wchar_size( const char * _utf8, size_t _utf8Size )
     return unicodeSize;
 }
 //////////////////////////////////////////////////////////////////////////
-size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _unicode, size_t _unicodeCapacity )
+size_t utf8_to_unicode( const char * _utf8, size_t _utf8Size, wchar_t * const _unicode, size_t _unicodeCapacity )
 {
     if( _unicodeCapacity == 0 )
     {
@@ -255,7 +255,7 @@ size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _uni
     return unicodeSize;
 }
 //////////////////////////////////////////////////////////////////////////
-size_t utf8_from_char32( char32_t _code, char _utf8[5] )
+size_t utf8_from_unicode32( char32_t _code, char _utf8[5] )
 {
     if( _code <= 0x7FU )
     {
