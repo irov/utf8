@@ -1,7 +1,6 @@
 #include "utf8/utf8.h"
 
 #include <stdint.h>
-#include <wchar.h>
 #include <string.h>
 
 //////////////////////////////////////////////////////////////////////////
@@ -9,7 +8,7 @@
 //////////////////////////////////////////////////////////////////////////
 size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * const _utf8, size_t _utf8Capacity )
 {
-    if( _utf8Capacity == 0 )
+    if( _utf8 != NULL && _utf8Capacity == 0 )
     {
         return 0;
     }
@@ -109,6 +108,11 @@ size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * co
         }
     }
 
+    if( utf8Size + 1 > _utf8Capacity )
+    {
+        return UTF8_UNKNOWN;
+    }
+
     _utf8[utf8Size] = '\0';
 
     return utf8Size;
@@ -116,7 +120,7 @@ size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * co
 //////////////////////////////////////////////////////////////////////////
 size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _unicode, size_t _unicodeCapacity )
 {
-    if( _unicodeCapacity == 0 )
+    if( _unicode != NULL && _unicodeCapacity == 0 )
     {
         return 0;
     }
@@ -129,11 +133,6 @@ size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _uni
     {
         for( size_t i = 0; i != utf8Size; )
         {
-            if( unicodeSize >= _unicodeCapacity )
-            {
-                break;
-            }
-
             uint32_t c = (uint8_t)_utf8[i];
 
             if( (c & 0x80) == 0 )
@@ -246,6 +245,46 @@ size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _uni
     _unicode[unicodeSize] = L'\0';
 
     return unicodeSize;
+}
+//////////////////////////////////////////////////////////////////////////
+size_t utf8_from_char32( char32_t _code, char _utf8[5] )
+{
+    if( _code <= 0x7FU )
+    {
+        _utf8[0] = (char)_code;
+        _utf8[1] = '\0';
+
+        return 1;
+    }
+    else if( _code <= 0x7FFU )
+    {
+        _utf8[0] = (char)(0xC0U | ((_code >> 6) & 0x1FU));
+        _utf8[1] = (char)(0x80U | (_code & 0x3FU));
+        _utf8[2] = '\0';
+
+        return 2;
+    }
+    else if( _code <= 0xFFFFU )
+    {
+        _utf8[0] = (char)(0xE0U | ((_code >> 12) & 0x0FU));
+        _utf8[1] = (char)(0x80U | ((_code >> 6) & 0x3FU));
+        _utf8[2] = (char)(0x80U | (_code & 0x3FU));
+        _utf8[3] = '\0';
+
+        return 3;
+    }
+    else if( _code <= 0x10FFFFU )
+    {
+        _utf8[0] = (char)(0xF0U | ((_code >> 18) & 0x07U));
+        _utf8[1] = (char)(0x80U | ((_code >> 12) & 0x3FU));
+        _utf8[2] = (char)(0x80U | ((_code >> 6) & 0x3FU));
+        _utf8[3] = (char)(0x80U | (_code & 0x3FU));
+        _utf8[4] = '\0';
+
+        return 4;
+    }
+    
+    return UTF8_UNKNOWN;
 }
 //////////////////////////////////////////////////////////////////////////
 const char * utf8_next_code( const char * _utf8, const char * _utf8End, uint32_t * _utf8Code )

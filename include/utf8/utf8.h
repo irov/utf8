@@ -1,7 +1,8 @@
 #ifndef UTF8_H_
 #define UTF8_H_
 
-#include <stdbool.h>
+#include <wchar.h>
+#include <uchar.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -32,6 +33,16 @@ size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * co
  *         _unicode is NULL. UTF8_UNKNOWN on error (invalid UTF-8 or buffer overflow).
  */
 size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _unicode, size_t _unicodeCapacity );
+
+/**
+ * Encodes a single Unicode code point (U+0000..U+10FFFF) to UTF-8.
+ *
+ * @param _code Code point (UTF-32).
+ * @param _utf8 Output buffer; must have space for at least 5 bytes (4 UTF-8 + NUL).
+ *
+ * @return Number of UTF-8 bytes written (1..4), or UTF8_UNKNOWN if _code > 0x10FFFF.
+ */
+size_t utf8_from_char32( char32_t _code, char _utf8[5] );
 
 /**
  * Reads and validates the next UTF-8 code point.

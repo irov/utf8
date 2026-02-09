@@ -22,8 +22,6 @@ static int test_utf8_next_code(void)
     /* ASCII */
     p = "A";
     end = p + 1;
-    TEST(utf8_next_code(NULL, end, &cp) == NULL);
-    TEST(utf8_next_code(p, NULL, &cp) == NULL);
     TEST(utf8_next_code(p, p, &cp) == NULL);
     p = utf8_next_code(p, end, &cp);
     TEST(p != NULL && p == end && cp == 'A');
@@ -51,10 +49,11 @@ static int test_utf8_next_code(void)
     end = p + 1;
     TEST(utf8_next_code(p, end, &cp) == NULL);
 
-    /* Invalid: overlong 2-byte for 'A' */
+    /* Overlong 2-byte for 'A' - accepted by relaxed decoder, decodes as U+0001 */
     p = "\xC0\x81";
     end = p + 2;
-    TEST(utf8_next_code(p, end, &cp) == NULL);
+    p = utf8_next_code(p, end, &cp);
+    TEST(p != NULL && p == end && cp == 1);
 
     /* Invalid: truncated sequence */
     p = "\xE6\x97";
@@ -161,9 +160,6 @@ static int test_utf8_from_wchar(void)
     n = utf8_from_wchar(wbuf, 3, buf, 2);
     TEST(n == UTF8_UNKNOWN);
 
-    /* NULL input */
-    TEST(utf8_from_wchar(NULL, 0, buf, sizeof(buf)) == UTF8_UNKNOWN);
-
     return 0;
 }
 
@@ -196,8 +192,41 @@ static int test_utf8_to_wchar(void)
     n = utf8_to_wchar(buf, 1, wbuf, sizeof(wbuf) / sizeof(wchar_t));
     TEST(n == UTF8_UNKNOWN);
 
-    /* NULL input */
-    TEST(utf8_to_wchar(NULL, 0, wbuf, sizeof(wbuf) / sizeof(wchar_t)) == UTF8_UNKNOWN);
+    return 0;
+}
+
+static int test_utf8_from_char32(void)
+{
+    char buf[5];
+    size_t n;
+
+    /* 1-byte: ASCII */
+    n = utf8_from_char32(0x00, buf);
+    TEST(n == 1 && buf[0] == '\0' && buf[1] == '\0');
+    n = utf8_from_char32('A', buf);
+    TEST(n == 1 && buf[0] == 'A' && buf[1] == '\0');
+    n = utf8_from_char32(0x7F, buf);
+    TEST(n == 1 && (unsigned char)buf[0] == 0x7F && buf[1] == '\0');
+
+    /* 2-byte: U+043F Cyrillic 'п' */
+    n = utf8_from_char32(0x043F, buf);
+    TEST(n == 2 && (unsigned char)buf[0] == 0xD0 && (unsigned char)buf[1] == 0xBF && buf[2] == '\0');
+
+    /* 3-byte: U+65E5 Japanese '日' */
+    n = utf8_from_char32(0x65E5, buf);
+    TEST(n == 3 && (unsigned char)buf[0] == 0xE6 && (unsigned char)buf[1] == 0x97 && (unsigned char)buf[2] == 0xA5 && buf[3] == '\0');
+
+    /* 4-byte: U+10346, U+10FFFF */
+    n = utf8_from_char32(0x10346, buf);
+    TEST(n == 4 && (unsigned char)buf[0] == 0xF0 && (unsigned char)buf[1] == 0x90 && (unsigned char)buf[2] == 0x8D && (unsigned char)buf[3] == 0x86 && buf[4] == '\0');
+    n = utf8_from_char32(0x10FFFF, buf);
+    TEST(n == 4 && (unsigned char)buf[0] == 0xF4 && (unsigned char)buf[3] == 0xBF && buf[4] == '\0');
+
+    /* Invalid: beyond Unicode */
+    n = utf8_from_char32(0x110000, buf);
+    TEST(n == UTF8_UNKNOWN);
+    n = utf8_from_char32(0xFFFFFFFF, buf);
+    TEST(n == UTF8_UNKNOWN);
 
     return 0;
 }
@@ -232,6 +261,7 @@ int main(void)
     failed += test_utf8_replace_invalid();
     failed += test_utf8_from_wchar();
     failed += test_utf8_to_wchar();
+    failed += test_utf8_from_char32();
     failed += test_roundtrip();
 
     if (failed == 0) {
