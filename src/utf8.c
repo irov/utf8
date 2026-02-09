@@ -2,13 +2,48 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <wchar.h>
 
 //////////////////////////////////////////////////////////////////////////
 #define UTF8_REPLACEMENT_CHARACTER (0xFFFD)
 //////////////////////////////////////////////////////////////////////////
+size_t utf8_from_wchar_size( const wchar_t * _unicode, size_t _unicodeSize )
+{
+    size_t unicodeSize = (_unicodeSize == UTF8_UNKNOWN) ? wcslen( _unicode ) : _unicodeSize;
+    size_t utf8Size = 0;
+
+    for( size_t i = 0; i != unicodeSize; ++i )
+    {
+        uint32_t wc = (uint32_t)_unicode[i];
+
+        if( wc < 0x80 )
+        {
+            utf8Size += 1;
+        }
+        else if( wc < 0x800 )
+        {
+            utf8Size += 2;
+        }
+        else if( wc < 0x10000 )
+        {
+            utf8Size += 3;
+        }
+        else if( wc < 0x110000 )
+        {
+            utf8Size += 4;
+        }
+        else
+        {
+            return UTF8_UNKNOWN;
+        }
+    }
+
+    return utf8Size;
+}
+//////////////////////////////////////////////////////////////////////////
 size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * const _utf8, size_t _utf8Capacity )
 {
-    if( _utf8 != NULL && _utf8Capacity == 0 )
+    if( _utf8Capacity == 0 )
     {
         return 0;
     }
@@ -16,37 +51,6 @@ size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * co
     size_t unicodeSize = (_unicodeSize == UTF8_UNKNOWN) ? wcslen( _unicode ) : _unicodeSize;
 
     size_t utf8Size = 0;
-
-    if( _utf8 == NULL )
-    {
-        for( size_t i = 0; i != unicodeSize; ++i )
-        {
-            uint32_t wc = (uint32_t)_unicode[i];
-
-            if( wc < 0x80 )
-            {
-                utf8Size += 1;
-            }
-            else if( wc < 0x800 )
-            {
-                utf8Size += 2;
-            }
-            else if( wc < 0x10000 )
-            {
-                utf8Size += 3;
-            }
-            else if( wc < 0x110000 )
-            {
-                utf8Size += 4;
-            }
-            else
-            {
-                return UTF8_UNKNOWN;
-            }
-        }
-
-        return utf8Size;
-    }
 
     for( size_t i = 0; i != unicodeSize; ++i )
     {
@@ -118,9 +122,61 @@ size_t utf8_from_wchar( const wchar_t * _unicode, size_t _unicodeSize, char * co
     return utf8Size;
 }
 //////////////////////////////////////////////////////////////////////////
+size_t utf8_to_wchar_size( const char * _utf8, size_t _utf8Size )
+{
+    size_t utf8Size = (_utf8Size == UTF8_UNKNOWN) ? strlen( _utf8 ) : _utf8Size;
+
+    size_t unicodeSize = 0;
+
+    for( size_t i = 0; i != utf8Size; )
+    {
+        uint32_t c = (uint8_t)_utf8[i];
+
+        if( (c & 0x80) == 0 )
+        {
+            i += 1;
+        }
+        else if( (c & 0xE0) == 0xC0 )
+        {
+            if( i + 1 >= utf8Size )
+            {
+                return UTF8_UNKNOWN;
+            }
+
+            i += 2;
+        }
+        else if( (c & 0xF0) == 0xE0 )
+        {
+            if( i + 2 >= utf8Size )
+            {
+                return UTF8_UNKNOWN;
+            }
+
+            i += 3;
+        }
+        else if( (c & 0xF8) == 0xF0 )
+        {
+            if( i + 3 >= utf8Size )
+            {
+                return UTF8_UNKNOWN;
+            }
+
+            i += 4;
+        }
+        else
+        {
+            return UTF8_UNKNOWN;
+        }
+
+        unicodeSize += 1;
+    }
+
+    return unicodeSize;
+}
+//////////////////////////////////////////////////////////////////////////
 size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _unicode, size_t _unicodeCapacity )
 {
-    if( _unicode != NULL && _unicodeCapacity == 0 )
+    if( _unicodeCapacity == 0 )
     {
         return 0;
     }
@@ -128,54 +184,6 @@ size_t utf8_to_wchar( const char * _utf8, size_t _utf8Size, wchar_t * const _uni
     size_t utf8Size = (_utf8Size == UTF8_UNKNOWN) ? strlen( _utf8 ) : _utf8Size;
 
     size_t unicodeSize = 0;
-
-    if( _unicode == NULL )
-    {
-        for( size_t i = 0; i != utf8Size; )
-        {
-            uint32_t c = (uint8_t)_utf8[i];
-
-            if( (c & 0x80) == 0 )
-            {
-                i += 1;
-            }
-            else if( (c & 0xE0) == 0xC0 )
-            {
-                if( i + 1 >= utf8Size )
-                {
-                    return UTF8_UNKNOWN;
-                }
-
-                i += 2;
-            }
-            else if( (c & 0xF0) == 0xE0 )
-            {
-                if( i + 2 >= utf8Size )
-                {
-                    return UTF8_UNKNOWN;
-                }
-
-                i += 3;
-            }
-            else if( (c & 0xF8) == 0xF0 )
-            {
-                if( i + 3 >= utf8Size )
-                {
-                    return UTF8_UNKNOWN;
-                }
-
-                i += 4;
-            }
-            else
-            {
-                return UTF8_UNKNOWN;
-            }
-
-            unicodeSize += 1;
-        }
-
-        return unicodeSize;
-    }
 
     for( size_t i = 0; i != utf8Size; )
     {

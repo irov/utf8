@@ -141,8 +141,8 @@ static int test_utf8_from_wchar(void)
     TEST(n == 2);
     TEST(buf[0] == 'h' && buf[1] == 'i' && buf[2] == '\0');
 
-    /* Size calculation mode */
-    n = utf8_from_wchar(wbuf, 2, NULL, 0);
+    /* Size calculation */
+    n = utf8_from_wchar_size(wbuf, 2);
     TEST(n == 2);
 
     /* Cyrillic "при" - 3 chars, 6 UTF-8 bytes */
@@ -175,8 +175,8 @@ static int test_utf8_to_wchar(void)
     TEST(n == 2);
     TEST(wbuf[0] == L'H' && wbuf[1] == L'i' && wbuf[2] == L'\0');
 
-    /* Size calculation mode */
-    n = utf8_to_wchar(buf, 2, NULL, 0);
+    /* Size calculation */
+    n = utf8_to_wchar_size(buf, 2);
     TEST(n == 2);
 
     /* Cyrillic "при" */
