@@ -274,7 +274,7 @@ size_t utf8_to_unicode_size( const char * _utf8 )
 }
 
 //////////////////////////////////////////////////////////////////////////
-static const char * __convert_utf8_to_unicode( const char * _utf8, wchar_t * const _unicode, size_t _unicodeSize, size_t _unicodeCapacity )
+static const char * __convert_utf8_to_unicode( const char * _utf8, wchar_t * const _unicode, size_t _unicodeSize )
 {
     uint8_t c0 = (uint8_t)*_utf8++;
 
@@ -334,7 +334,7 @@ size_t utf8_to_unicodez( const char * _utf8, size_t _utf8Size, wchar_t * const _
             break;
         }
 
-        const char * it_next = __convert_utf8_to_unicode( it, _unicode, unicodeSize, _unicodeCapacity );
+        const char * it_next = __convert_utf8_to_unicode( it, _unicode, unicodeSize );
 
         if( it_next == NULL )
         {
@@ -365,7 +365,7 @@ size_t utf8_to_unicode( const char * _utf8, wchar_t * const _unicode, size_t _un
             break;
         }
 
-        const char * it_next = __convert_utf8_to_unicode( it, _unicode, unicodeSize, _unicodeCapacity );
+        const char * it_next = __convert_utf8_to_unicode( it, _unicode, unicodeSize );
 
         if( it_next == NULL )
         {
