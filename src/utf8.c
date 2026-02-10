@@ -5,6 +5,9 @@
 
 //////////////////////////////////////////////////////////////////////////
 #define UTF8_REPLACEMENT_CHARACTER (0xFFFD)
+#define UTF8_SURROGATE_LO          (0xD800)
+#define UTF8_SURROGATE_HI          (0xDFFF)
+#define UTF8_MAX_CODE_POINT        (0x10FFFF)
 //////////////////////////////////////////////////////////////////////////
 static size_t __utf8_code_size( uint32_t _code )
 {
@@ -16,11 +19,15 @@ static size_t __utf8_code_size( uint32_t _code )
     {
         return 2;
     }
+    else if( _code >= UTF8_SURROGATE_LO && _code <= UTF8_SURROGATE_HI )
+    {
+        return UTF8_UNKNOWN;
+    }
     else if( _code < 0x10000 )
     {
         return 3;
     }
-    else if( _code < 0x110000 )
+    else if( _code <= UTF8_MAX_CODE_POINT )
     {
         return 4;
     }
@@ -99,6 +106,10 @@ static size_t __convert_unicode_to_utf8( uint32_t _code, char * const _utf8, siz
 
         return 2;
     }
+    else if( _code >= UTF8_SURROGATE_LO && _code <= UTF8_SURROGATE_HI )
+    {
+        return UTF8_UNKNOWN;
+    }
     else if( _code < 0x10000 )
     {
         if( _utf8Size + 2 >= _utf8Capacity )
@@ -112,7 +123,7 @@ static size_t __convert_unicode_to_utf8( uint32_t _code, char * const _utf8, siz
 
         return 3;
     }
-    else if( _code < 0x110000 )
+    else if( _code <= UTF8_MAX_CODE_POINT )
     {
         if( _utf8Size + 3 >= _utf8Capacity )
         {
@@ -371,37 +382,41 @@ size_t utf8_to_unicode( const char * _utf8, wchar_t * const _unicode, size_t _un
 //////////////////////////////////////////////////////////////////////////
 size_t utf8_from_unicode32_symbol( char32_t _code, char * const _utf8 )
 {
-    if( _code <= 0x7FU )
+    if( _code <= 0x7F )
     {
         _utf8[0] = (char)_code;
 
         return 1;
     }
-    else if( _code <= 0x7FFU )
+    else if( _code <= 0x7FF )
     {
-        _utf8[0] = (char)(0xC0U | ((_code >> 6) & 0x1FU));
-        _utf8[1] = (char)(0x80U | (_code & 0x3FU));
+        _utf8[0] = (char)(0xC0 | ((_code >> 6) & 0x1F));
+        _utf8[1] = (char)(0x80 | (_code & 0x3F));
 
         return 2;
     }
-    else if( _code <= 0xFFFFU )
+    else if( _code >= UTF8_SURROGATE_LO && _code <= UTF8_SURROGATE_HI )
     {
-        _utf8[0] = (char)(0xE0U | ((_code >> 12) & 0x0FU));
-        _utf8[1] = (char)(0x80U | ((_code >> 6) & 0x3FU));
-        _utf8[2] = (char)(0x80U | (_code & 0x3FU));
+        return UTF8_UNKNOWN;
+    }
+    else if( _code <= 0xFFFF )
+    {
+        _utf8[0] = (char)(0xE0 | ((_code >> 12) & 0x0F));
+        _utf8[1] = (char)(0x80 | ((_code >> 6) & 0x3F));
+        _utf8[2] = (char)(0x80 | (_code & 0x3F));
 
         return 3;
     }
-    else if( _code <= 0x10FFFFU )
+    else if( _code <= UTF8_MAX_CODE_POINT )
     {
-        _utf8[0] = (char)(0xF0U | ((_code >> 18) & 0x07U));
-        _utf8[1] = (char)(0x80U | ((_code >> 12) & 0x3FU));
-        _utf8[2] = (char)(0x80U | ((_code >> 6) & 0x3FU));
-        _utf8[3] = (char)(0x80U | (_code & 0x3FU));
+        _utf8[0] = (char)(0xF0 | ((_code >> 18) & 0x07));
+        _utf8[1] = (char)(0x80 | ((_code >> 12) & 0x3F));
+        _utf8[2] = (char)(0x80 | ((_code >> 6) & 0x3F));
+        _utf8[3] = (char)(0x80 | (_code & 0x3F));
 
         return 4;
     }
-    
+
     return UTF8_UNKNOWN;
 }
 //////////////////////////////////////////////////////////////////////////
@@ -416,50 +431,88 @@ const char * utf8_next_code( const char * _utf8, const char * _utf8End, uint32_t
     const uint8_t * ep = (const uint8_t *)_utf8End;
 
     uint32_t code;
+    uint32_t b0 = (uint32_t)*p++;
 
-    uint32_t b0 = *p++;
-
-    if( (b0 & 0x80U) == 0 )
+    if( (b0 & 0x80) == 0 )
     {
         code = b0;
     }
-    else if( (b0 & 0xE0U) == 0xC0 )
+    else if( (b0 & 0xE0) == 0xC0 )
     {
         if( p + 1 > ep )
         {
             return NULL;
         }
 
-        uint32_t p1 = *p++;
+        uint32_t b1 = (uint32_t)*p++;
 
-        code = ((b0 & 0x1FU) << 6) | (p1 & 0x3FU);
+        if( (b1 & 0xC0) != 0x80 )
+        {
+            return NULL;
+        }
+        code = ((b0 & 0x1F) << 6) | (b1 & 0x3F);
+
+        if( code < 0x80 )
+        {
+            return NULL;
+        }
     }
-    else if( (b0 & 0xF0U) == 0xE0 )
+    else if( (b0 & 0xF0) == 0xE0 )
     {
         if( p + 2 > ep )
         {
             return NULL;
         }
 
-        uint32_t p1 = *p++;
-        uint32_t p2 = *p++;
+        uint32_t b1 = (uint32_t)*p++;
+        uint32_t b2 = (uint32_t)*p++;
 
-        code = ((b0 & 0x0FU) << 12) | ((p1 & 0x3FU) << 6) | (p2 & 0x3FU);
+        if( (b1 & 0xC0) != 0x80 || (b2 & 0xC0) != 0x80 )
+        {
+            return NULL;
+        }
+
+        code = ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F);
+        
+        if( code < 0x800 )
+        {
+            return NULL;
+        }
     }
-    else if( (b0 & 0xF8U) == 0xF0 )
+    else if( (b0 & 0xF8) == 0xF0 )
     {
         if( p + 3 > ep )
         {
             return NULL;
         }
 
-        uint32_t p1 = *p++;
-        uint32_t p2 = *p++;
-        uint32_t p3 = *p++;
+        uint32_t b1 = (uint32_t)*p++;
+        uint32_t b2 = (uint32_t)*p++;
+        uint32_t b3 = (uint32_t)*p++;
 
-        code = ((b0 & 0x07U) << 18) | ((p1 & 0x3FU) << 12) | ((p2 & 0x3FU) << 6) | (p3 & 0x3FU);
+        if( (b1 & 0xC0) != 0x80 || (b2 & 0xC0) != 0x80 || (b3 & 0xC0) != 0x80 )
+        {
+            return NULL;
+        }
+
+        code = ((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F);
+
+        if( code < 0x10000 )
+        {
+            return NULL;
+        }
     }
     else
+    {
+        return NULL;
+    }
+
+    if( code >= UTF8_SURROGATE_LO && code <= UTF8_SURROGATE_HI )
+    {
+        return NULL;
+    }
+
+    if( code > UTF8_MAX_CODE_POINT )
     {
         return NULL;
     }

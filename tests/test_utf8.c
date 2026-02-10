@@ -49,11 +49,15 @@ static int test_utf8_next_code( void )
     end = p + 1;
     TEST( utf8_next_code( p, end, &cp ) == NULL );
 
-    /* Overlong 2-byte for 'A' - accepted by relaxed decoder, decodes as U+0001 */
+    /* Invalid: overlong 2-byte for U+0001 (must use 1 byte) */
     p = "\xC0\x81";
     end = p + 2;
-    p = utf8_next_code( p, end, &cp );
-    TEST( p != NULL && p == end && cp == 1 );
+    TEST( utf8_next_code( p, end, &cp ) == NULL );
+
+    /* Invalid: surrogate U+D800 encoded as UTF-8 (ED A0 80) */
+    p = "\xED\xA0\x80";
+    end = p + 3;
+    TEST( utf8_next_code( p, end, &cp ) == NULL );
 
     /* Invalid: truncated sequence */
     p = "\xE6\x97";
@@ -161,6 +165,12 @@ static int test_utf8_from_unicodez( void )
     n = utf8_from_unicodez( wbuf, 3, buf, 2 );
     TEST( n == UTF8_UNKNOWN );
 
+    /* Invalid: surrogate in input (not a valid Unicode scalar value) */
+    wbuf[0] = (wchar_t)0xD800;
+    wbuf[1] = L'\0';
+    n = utf8_from_unicodez( wbuf, 1, buf, sizeof( buf ) );
+    TEST( n == UTF8_UNKNOWN );
+
     return 0;
 }
 
@@ -223,6 +233,12 @@ static int test_utf8_from_unicode32( void )
     TEST( n == 4 && (unsigned char)buf[0] == 0xF0 && (unsigned char)buf[1] == 0x90 && (unsigned char)buf[2] == 0x8D && (unsigned char)buf[3] == 0x86 );
     n = utf8_from_unicode32_symbol( 0x10FFFF, buf );
     TEST( n == 4 && (unsigned char)buf[0] == 0xF4 && (unsigned char)buf[3] == 0xBF );
+
+    /* Invalid: surrogates U+D800..U+DFFF */
+    n = utf8_from_unicode32_symbol( 0xD800, buf );
+    TEST( n == UTF8_UNKNOWN );
+    n = utf8_from_unicode32_symbol( 0xDFFF, buf );
+    TEST( n == UTF8_UNKNOWN );
 
     /* Invalid: beyond Unicode */
     n = utf8_from_unicode32_symbol( 0x110000, buf );
