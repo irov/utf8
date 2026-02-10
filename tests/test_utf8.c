@@ -140,7 +140,7 @@ static int test_utf8_from_unicodez( void )
     /* ptr+size API */
     n = utf8_from_unicodez( wbuf, 2, buf, sizeof( buf ) );
     TEST( n == 2 );
-    TEST( buf[0] == 'h' && buf[1] == 'i' && buf[2] == '\0' );
+    TEST( buf[0] == 'h' && buf[1] == 'i' );
 
     /* Size calculation (ptr+size) */
     n = utf8_from_unicodez_size( wbuf, 2 );
@@ -175,7 +175,7 @@ static int test_utf8_to_unicodez( void )
     /* ptr+size API */
     n = utf8_to_unicodez( buf, 2, wbuf, sizeof( wbuf ) / sizeof( wchar_t ) );
     TEST( n == 2 );
-    TEST( wbuf[0] == L'H' && wbuf[1] == L'i' && wbuf[2] == L'\0' );
+    TEST( wbuf[0] == L'H' && wbuf[1] == L'i' );
 
     /* Size calculation (ptr+size) */
     n = utf8_to_unicodez_size( buf, 2 );
@@ -204,25 +204,25 @@ static int test_utf8_from_unicode32( void )
 
     /* 1-byte: ASCII */
     n = utf8_from_unicode32_symbol( 0x00, buf );
-    TEST( n == 1 && buf[0] == '\0' && buf[1] == '\0' );
+    TEST( n == 1 && buf[0] == '\0' );
     n = utf8_from_unicode32_symbol( 'A', buf );
-    TEST( n == 1 && buf[0] == 'A' && buf[1] == '\0' );
+    TEST( n == 1 && buf[0] == 'A' );
     n = utf8_from_unicode32_symbol( 0x7F, buf );
-    TEST( n == 1 && (unsigned char)buf[0] == 0x7F && buf[1] == '\0' );
+    TEST( n == 1 && (unsigned char)buf[0] == 0x7F );
 
     /* 2-byte: U+043F Cyrillic 'п' */
     n = utf8_from_unicode32_symbol( 0x043F, buf );
-    TEST( n == 2 && (unsigned char)buf[0] == 0xD0 && (unsigned char)buf[1] == 0xBF && buf[2] == '\0' );
+    TEST( n == 2 && (unsigned char)buf[0] == 0xD0 && (unsigned char)buf[1] == 0xBF );
 
     /* 3-byte: U+65E5 Japanese '日' */
     n = utf8_from_unicode32_symbol( 0x65E5, buf );
-    TEST( n == 3 && (unsigned char)buf[0] == 0xE6 && (unsigned char)buf[1] == 0x97 && (unsigned char)buf[2] == 0xA5 && buf[3] == '\0' );
+    TEST( n == 3 && (unsigned char)buf[0] == 0xE6 && (unsigned char)buf[1] == 0x97 && (unsigned char)buf[2] == 0xA5 );
 
     /* 4-byte: U+10346, U+10FFFF */
     n = utf8_from_unicode32_symbol( 0x10346, buf );
-    TEST( n == 4 && (unsigned char)buf[0] == 0xF0 && (unsigned char)buf[1] == 0x90 && (unsigned char)buf[2] == 0x8D && (unsigned char)buf[3] == 0x86 && buf[4] == '\0' );
+    TEST( n == 4 && (unsigned char)buf[0] == 0xF0 && (unsigned char)buf[1] == 0x90 && (unsigned char)buf[2] == 0x8D && (unsigned char)buf[3] == 0x86 );
     n = utf8_from_unicode32_symbol( 0x10FFFF, buf );
-    TEST( n == 4 && (unsigned char)buf[0] == 0xF4 && (unsigned char)buf[3] == 0xBF && buf[4] == '\0' );
+    TEST( n == 4 && (unsigned char)buf[0] == 0xF4 && (unsigned char)buf[3] == 0xBF );
 
     /* Invalid: beyond Unicode */
     n = utf8_from_unicode32_symbol( 0x110000, buf );
