@@ -13,7 +13,7 @@
  *
  * @param _unicode     Input wide-character string.
  * @param _unicodeSize Number of wchar_t elements, or UTF8_UNKNOWN for wcslen().
- * @return Required UTF-8 byte count (excluding NUL), or UTF8_UNKNOWN on invalid input.
+ * @return Required UTF-8 byte count (excluding '\0'), or UTF8_UNKNOWN on invalid input.
  */
 size_t utf8_from_unicodez_size( const wchar_t * _unicode, size_t _unicodeSize );
 
@@ -22,7 +22,7 @@ size_t utf8_from_unicodez_size( const wchar_t * _unicode, size_t _unicodeSize );
  * wide-character string.
  *
  * @param _unicode NUL-terminated wide-character string.
- * @return Required UTF-8 byte count (excluding NUL), or UTF8_UNKNOWN on invalid input.
+ * @return Required UTF-8 byte count (excluding '\0'), or UTF8_UNKNOWN on invalid input.
  */
 size_t utf8_from_unicode_size( const wchar_t * _unicode );
 
@@ -32,8 +32,8 @@ size_t utf8_from_unicode_size( const wchar_t * _unicode );
  * @param _unicode      Input wide-character string.
  * @param _unicodeSize  Number of wchar_t elements, or UTF8_UNKNOWN for wcslen().
  * @param _utf8         Output buffer.
- * @param _utf8Capacity Output buffer size in bytes (including trailing NUL).
- * @return Number of UTF-8 bytes written (excluding NUL), or UTF8_UNKNOWN on error.
+ * @param _utf8Capacity Output buffer size in bytes.
+ * @return Number of UTF-8 bytes written (excluding '\0'), or UTF8_UNKNOWN on error.
  */
 size_t utf8_from_unicodez( const wchar_t * _unicode, size_t _unicodeSize, char * const _utf8, size_t _utf8Capacity );
 
@@ -42,7 +42,7 @@ size_t utf8_from_unicodez( const wchar_t * _unicode, size_t _unicodeSize, char *
  *
  * @param _unicode      NUL-terminated wide-character string.
  * @param _utf8         Output buffer.
- * @param _utf8Capacity Output buffer size in bytes (including trailing NUL).
+ * @param _utf8Capacity Output buffer size in bytes.
  * @return Number of UTF-8 bytes written (excluding NUL), or UTF8_UNKNOWN on error.
  */
 size_t utf8_from_unicode( const wchar_t * _unicode, char * const _utf8, size_t _utf8Capacity );
@@ -70,7 +70,7 @@ size_t utf8_to_unicode_size( const char * _utf8 );
  * @param _utf8            Input UTF-8 string.
  * @param _utf8Size        Number of bytes, or UTF8_UNKNOWN for strlen().
  * @param _unicode         Output buffer.
- * @param _unicodeCapacity Output buffer size in wchar_t elements (including L'\0').
+ * @param _unicodeCapacity Output buffer size in wchar_t elements.
  * @return Number of wchar_t written (excluding L'\0'), or UTF8_UNKNOWN on error.
  */
 size_t utf8_to_unicodez( const char * _utf8, size_t _utf8Size, wchar_t * const _unicode, size_t _unicodeCapacity );
@@ -80,7 +80,7 @@ size_t utf8_to_unicodez( const char * _utf8, size_t _utf8Size, wchar_t * const _
  *
  * @param _utf8            NUL-terminated UTF-8 string.
  * @param _unicode         Output buffer.
- * @param _unicodeCapacity Output buffer size in wchar_t elements (including L'\0').
+ * @param _unicodeCapacity Output buffer size in wchar_t elements.
  * @return Number of wchar_t written (excluding L'\0'), or UTF8_UNKNOWN on error.
  */
 size_t utf8_to_unicode( const char * _utf8, wchar_t * const _unicode, size_t _unicodeCapacity );
