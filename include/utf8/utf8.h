@@ -127,6 +127,6 @@ const char * utf8_validate( const char * _utf8, const char * _utf8End );
  *
  * @return Pointer to the byte after the last byte written, or NULL on error.
  */
-const char * utf8_replace_invalid( const char * _utf8, const char * _utf8End, char * _utf8Out );
+const char * utf8_replace_invalid( const char * _utf8, const char * _utf8End, char * const _utf8Out );
 
 #endif

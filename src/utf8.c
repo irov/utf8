@@ -226,6 +226,11 @@ size_t utf8_to_unicodez_size( const char * _utf8, size_t _utf8Size )
             return UTF8_UNKNOWN;
         }
 
+        if( it + codeSize > it_end )
+        {
+            return UTF8_UNKNOWN;
+        }
+
         it += codeSize;
 
         ++unicodeSize;
@@ -464,7 +469,7 @@ const char * utf8_next_code( const char * _utf8, const char * _utf8End, uint32_t
         *_utf8Code = code;
     }
 
-    return p;
+    return (const char *)p;
 }
 //////////////////////////////////////////////////////////////////////////
 const char * utf8_validate( const char * _utf8, const char * _utf8End )
@@ -512,8 +517,10 @@ static char * __append_code_point( char * _out, uint32_t _cp )
     return _out;
 }
 //////////////////////////////////////////////////////////////////////////
-const char * utf8_replace_invalid( const char * _utf8, const char * _utf8End, char * _utf8Out )
+const char * utf8_replace_invalid( const char * _utf8, const char * _utf8End, char * const _utf8Out )
 {
+    char * uft8Work = _utf8Out;
+
     for( const char * p = _utf8; p != _utf8End; )
     {
         uint32_t code;
@@ -521,18 +528,18 @@ const char * utf8_replace_invalid( const char * _utf8, const char * _utf8End, ch
 
         if( next != NULL )
         {
-            _utf8Out = __append_code_point( _utf8Out, code );
+            uft8Work = __append_code_point( uft8Work, code );
 
             p = next;
         }
         else
         {
-            _utf8Out = __append_code_point( _utf8Out, UTF8_REPLACEMENT_CHARACTER );
+            uft8Work = __append_code_point( uft8Work, UTF8_REPLACEMENT_CHARACTER );
 
             ++p;
         }
     }
 
-    return _utf8Out;
+    return uft8Work;
 }
 //////////////////////////////////////////////////////////////////////////
