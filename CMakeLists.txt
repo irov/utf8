@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+option(UTF8_BUILD_TESTS "Build test executable" OFF)
+
 PROJECT(utf8 LANGUAGES C)
 
 MACRO(ADD_FILTER group_name)
@@ -20,9 +22,7 @@ ADD_LIBRARY(${PROJECT_NAME} STATIC ${SOURCE_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER ${PROJECT_NAME})
 
-# Tests
-option(BUILD_TESTS "Build test executable" ON)
-if(BUILD_TESTS)
+if(UTF8_BUILD_TESTS)
     add_executable(${PROJECT_NAME}_test tests/test_utf8.c)
     target_link_libraries(${PROJECT_NAME}_test PRIVATE ${PROJECT_NAME})
     target_include_directories(${PROJECT_NAME}_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
