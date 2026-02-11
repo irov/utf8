@@ -1,8 +1,5 @@
 #include "utf8/utf8.h"
 
-#include <stdint.h>
-#include <wchar.h>
-
 //////////////////////////////////////////////////////////////////////////
 #define UTF8_REPLACEMENT_CHARACTER (0xFFFD)
 #define UTF8_SURROGATE_LO          (0xD800)
@@ -380,7 +377,7 @@ size_t utf8_to_unicode( const char * _utf8, wchar_t * const _unicode, size_t _un
     return unicodeSize;
 }
 //////////////////////////////////////////////////////////////////////////
-size_t utf8_from_unicode32_symbol( char32_t _code, char * const _utf8 )
+size_t utf8_from_unicode32_symbol( uint32_t _code, char * const _utf8 )
 {
     if( _code <= 0x7F )
     {

@@ -2,7 +2,6 @@
 #define UTF8_H_
 
 #include <wchar.h>
-#include <uchar.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -93,7 +92,7 @@ size_t utf8_to_unicode( const char * _utf8, wchar_t * const _unicode, size_t _un
  *
  * @return Number of UTF-8 bytes written (1..4), or UTF8_UNKNOWN if _code > 0x10FFFF.
  */
-size_t utf8_from_unicode32_symbol( char32_t _code, char * const _utf8 );
+size_t utf8_from_unicode32_symbol( uint32_t _code, char * const _utf8 );
 
 /**
  * Reads and validates the next UTF-8 code point.
