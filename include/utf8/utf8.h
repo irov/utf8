@@ -11,7 +11,7 @@
  * Returns the number of UTF-8 bytes required to encode the wide-character string.
  *
  * @param _unicode     Input wide-character string.
- * @param _unicodeSize Number of wchar_t elements, or UTF8_UNKNOWN for wcslen().
+ * @param _unicodeSize Number of wchar_t elements.
  * @return Required UTF-8 byte count (excluding '\0'), or UTF8_UNKNOWN on invalid input.
  */
 size_t utf8_from_unicodez_size( const wchar_t * _unicode, size_t _unicodeSize );
@@ -29,7 +29,7 @@ size_t utf8_from_unicode_size( const wchar_t * _unicode );
  * Converts a wide-character string to UTF-8.
  *
  * @param _unicode      Input wide-character string.
- * @param _unicodeSize  Number of wchar_t elements, or UTF8_UNKNOWN for wcslen().
+ * @param _unicodeSize  Number of wchar_t elements.
  * @param _utf8         Output buffer.
  * @param _utf8Capacity Output buffer size in bytes.
  * @return Number of UTF-8 bytes written (excluding '\0'), or UTF8_UNKNOWN on error.
@@ -50,7 +50,7 @@ size_t utf8_from_unicode( const wchar_t * _unicode, char * const _utf8, size_t _
  * Returns the number of wchar_t required to decode the UTF-8 string.
  *
  * @param _utf8     Input UTF-8 string.
- * @param _utf8Size Number of bytes, or UTF8_UNKNOWN for strlen().
+ * @param _utf8Size Number of bytes.
  * @return Required wchar_t count (excluding L'\0'), or UTF8_UNKNOWN on invalid UTF-8.
  */
 size_t utf8_to_unicodez_size( const char * _utf8, size_t _utf8Size );
@@ -67,7 +67,7 @@ size_t utf8_to_unicode_size( const char * _utf8 );
  * Converts a UTF-8 string to wide characters.
  *
  * @param _utf8            Input UTF-8 string.
- * @param _utf8Size        Number of bytes, or UTF8_UNKNOWN for strlen().
+ * @param _utf8Size        Number of bytes.
  * @param _unicode         Output buffer.
  * @param _unicodeCapacity Output buffer size in wchar_t elements.
  * @return Number of wchar_t written (excluding L'\0'), or UTF8_UNKNOWN on error.
@@ -102,7 +102,7 @@ size_t utf8_from_unicode32_symbol( uint32_t _code, char * const _utf8 );
  * @param _utf8Code Optional: where to store decoded code point (U+0000..U+10FFFF).
  *
  * @return Pointer to the byte after the decoded code point, or NULL on error
- *         (invalid UTF-8, empty range, or NULL arguments).
+ *         (invalid UTF-8 or empty range).
  */
 const char * utf8_next_code( const char * _utf8, const char * _utf8End, uint32_t * const _utf8Code );
 

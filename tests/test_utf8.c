@@ -270,6 +270,114 @@ static int test_roundtrip( void )
     return 0;
 }
 
+static int test_surrogates( void )
+{
+    const char * utf8 = "\xF0\x9F\x98\x80"; /* U+1F600 */
+    wchar_t wide[3] = {0};
+    wchar_t wbuf[4];
+    char buf[8];
+    size_t wideLen;
+    size_t n;
+
+    if( sizeof( wchar_t ) == 2 )
+    {
+        /* UTF-16 surrogate pair */
+        wide[0] = (wchar_t)0xD83D;
+        wide[1] = (wchar_t)0xDE00;
+        wideLen = 2;
+    }
+    else
+    {
+        wide[0] = (wchar_t)0x1F600;
+        wideLen = 1;
+    }
+
+    /* Size calculation */
+    TEST( utf8_from_unicode_size( wide ) == 4 );
+    TEST( utf8_from_unicodez_size( wide, wideLen ) == 4 );
+    TEST( utf8_to_unicode_size( utf8 ) == wideLen );
+    TEST( utf8_to_unicodez_size( utf8, 4 ) == wideLen );
+
+    /* wchar_t -> UTF-8 */
+    n = utf8_from_unicodez( wide, wideLen, buf, sizeof( buf ) );
+    TEST( n == 4 && memcmp( buf, utf8, 4 ) == 0 );
+    n = utf8_from_unicode( wide, buf, sizeof( buf ) );
+    TEST( n == 4 && memcmp( buf, utf8, 4 ) == 0 );
+
+    /* UTF-8 -> wchar_t */
+    n = utf8_to_unicodez( utf8, 4, wbuf, wideLen );
+    TEST( n == wideLen && memcmp( wbuf, wide, wideLen * sizeof( wchar_t ) ) == 0 );
+    n = utf8_to_unicode( utf8, wbuf, wideLen );
+    TEST( n == wideLen && memcmp( wbuf, wide, wideLen * sizeof( wchar_t ) ) == 0 );
+
+    /* Insufficient capacity */
+    TEST( utf8_from_unicode( wide, buf, 3 ) == UTF8_UNKNOWN );
+    TEST( utf8_from_unicode( wide, buf, 0 ) == UTF8_UNKNOWN );
+    TEST( utf8_to_unicode( utf8, wbuf, wideLen - 1 ) == UTF8_UNKNOWN );
+
+    /* Invalid: truncated surrogate pair */
+    if( sizeof( wchar_t ) == 2 )
+    {
+        wchar_t lead[2] = {(wchar_t)0xD83D, L'\0'};
+
+        TEST( utf8_from_unicodez_size( wide, 1 ) == UTF8_UNKNOWN );
+        TEST( utf8_from_unicodez( wide, 1, buf, sizeof( buf ) ) == UTF8_UNKNOWN );
+        TEST( utf8_from_unicode_size( lead ) == UTF8_UNKNOWN );
+        TEST( utf8_from_unicode( lead, buf, sizeof( buf ) ) == UTF8_UNKNOWN );
+    }
+
+    return 0;
+}
+
+static int test_embedded_nul( void )
+{
+    const char utf8[] = "a\0b";
+    const wchar_t wide[] = L"a\0b";
+    wchar_t wbuf[8];
+    char buf[8];
+    size_t n;
+
+    /* ptr+size API converts embedded NUL */
+    n = utf8_to_unicodez( utf8, 3, wbuf, sizeof( wbuf ) / sizeof( wchar_t ) );
+    TEST( n == 3 && wbuf[1] == L'\0' && wbuf[2] == L'b' );
+    n = utf8_from_unicodez( wide, 3, buf, sizeof( buf ) );
+    TEST( n == 3 && buf[1] == '\0' && buf[2] == 'b' );
+
+    /* NUL-terminated API stops at it */
+    TEST( utf8_to_unicode_size( utf8 ) == 1 );
+    TEST( utf8_from_unicode_size( wide ) == 1 );
+
+    return 0;
+}
+
+static int test_utf8_to_unicode_invalid( void )
+{
+    const char * invalid[] = {
+        "\xC0\xAF",         /* overlong '/' */
+        "\xE0\x80\xAF",     /* overlong '/' */
+        "\xF0\x80\x80\xAF", /* overlong '/' */
+        "\xED\xA0\x80",     /* surrogate U+D800 */
+        "\xF4\x90\x80\x80", /* beyond U+10FFFF */
+        "\xE2\x82",         /* truncated sequence */
+        "\xC2\x41"          /* missing continuation byte */
+    };
+
+    wchar_t wbuf[8];
+
+    for( size_t index = 0; index != sizeof( invalid ) / sizeof( invalid[0] ); ++index )
+    {
+        const char * utf8 = invalid[index];
+        size_t utf8Len = strlen( utf8 );
+
+        TEST( utf8_to_unicode_size( utf8 ) == UTF8_UNKNOWN );
+        TEST( utf8_to_unicodez_size( utf8, utf8Len ) == UTF8_UNKNOWN );
+        TEST( utf8_to_unicode( utf8, wbuf, sizeof( wbuf ) / sizeof( wchar_t ) ) == UTF8_UNKNOWN );
+        TEST( utf8_to_unicodez( utf8, utf8Len, wbuf, sizeof( wbuf ) / sizeof( wchar_t ) ) == UTF8_UNKNOWN );
+    }
+
+    return 0;
+}
+
 int main( void )
 {
     int failed = 0;
@@ -281,6 +389,9 @@ int main( void )
     failed += test_utf8_to_unicodez();
     failed += test_utf8_from_unicode32();
     failed += test_roundtrip();
+    failed += test_surrogates();
+    failed += test_embedded_nul();
+    failed += test_utf8_to_unicode_invalid();
 
     if( failed == 0 )
     {
